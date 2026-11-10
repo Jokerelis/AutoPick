@@ -7,8 +7,8 @@ body {
 .hero {
   background: linear-gradient(
     120deg,
-    #17212d,
-    #35465a
+    #3a4542,
+    #0e2b1c
   );
   color: white;
   padding: 85px 0;
@@ -31,16 +31,20 @@ body {
 }
 
 .car-image {
-  height: 190px;
-  background: linear-gradient(
-    135deg,
-    #e2e8f0,
-    #cbd5e1
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 76px;
+  height: 200px;
+  overflow: hidden;
+  background-color: #e9ecef;
+}
+
+.car-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.car-card:hover .car-image img {
+  transform: scale(1.05);
 }
 
 .car-card .card-body {

@@ -38,6 +38,7 @@ def find_alternatives(
             "brand": car.brand,
             "model": car.model,
             "category": car.category,
+            "body_type": car.body_type,
             "total_price": price
         })
 

@@ -1,29 +1,66 @@
+
 from datetime import date
 from sqlalchemy import select
 
-from .models import Car,Reservation
+from .models import Car, Reservation
 from .pricing import calculate_price
 from .demand import get_demand_multiplier
 from .alternatives import find_alternatives
+from .ai_recommender import recommend_alternatives
+
 
 class CarNotFoundError(Exception):
     pass
 
+
 class ReservationConflictError(Exception):
-    def __init__(self, message, alternatives=None):
+    def __init__(
+        self,
+        message,
+        alternatives=None,
+        recommendation_source="Fallback"
+    ):
         super().__init__(message)
         self.alternatives = alternatives or []
+        self.recommendation_source = recommendation_source
+
+
+def create_conflict(db, company_id, car, data, message):
+    alternatives = find_alternatives(
+        db,
+        company_id,
+        car,
+        data.start_date,
+        data.end_date,
+        data.driver_age
+    )
+    print("FOUND ALTERNATIVES:", alternatives)
+    ranked, source = recommend_alternatives(
+        alternatives,
+        data.preferred_body_type
+    )
+
+    return ReservationConflictError(
+        message,
+        ranked,
+        source
+    )
 
 
 def create_reservation(db, company_id, data):
     if data.end_date <= data.start_date:
         raise ValueError("Incorrect reservation dates")
+
     if data.start_date < date.today():
         raise ValueError("Impossible to reserve the past")
+
     if data.driver_age < 20:
-        raise ValueError("Driver has to be atleast 20 years old")
+        raise ValueError("Driver has to be at least 20 years old")
+
     if data.driving_experience < 1:
-        raise ValueError("Driver must have atleast 1 year of driving experience")
+        raise ValueError(
+            "Driver must have at least 1 year of driving experience"
+        )
 
     car = db.scalar(
         select(Car).where(
@@ -34,16 +71,14 @@ def create_reservation(db, company_id, data):
 
     if car is None:
         raise CarNotFoundError("Car not found")
+
     if car.status != "Available":
-        alternatives = find_alternatives(
-            db, company_id, car,
-            data.start_date,
-            data.end_date,
-            data.driver_age
-        )
-        raise ReservationConflictError(
-            "Car is not available at these dates",
-            alternatives
+        raise create_conflict(
+            db,
+            company_id,
+            car,
+            data,
+            "Car is currently unavailable"
         )
 
     conflict = db.scalar(
@@ -57,16 +92,14 @@ def create_reservation(db, company_id, data):
     )
 
     if conflict is not None:
-        alternatives = find_alternatives(
-            db, company_id, car,
-            data.start_date,
-            data.end_date,
-            data.driver_age
+        raise create_conflict(
+            db,
+            company_id,
+            car,
+            data,
+            "Car is already reserved at these dates"
         )
-        raise ReservationConflictError(
-            "Car is already reserved at these dates",
-            alternatives
-        )
+
     demand_multiplier = get_demand_multiplier(
         db,
         company_id,
@@ -83,15 +116,16 @@ def create_reservation(db, company_id, data):
         car,
         demand_multiplier
     )
+
     reservation = Reservation(
-        company_id = company_id,
-        car_id = car.id,
-        start_date = data.start_date,
-        end_date = data.end_date,
-        driver_age = data.driver_age,
-        driving_experience = data.driving_experience,
-        total_price = total_price,
-        status = "Confirmed"
+        company_id=company_id,
+        car_id=car.id,
+        start_date=data.start_date,
+        end_date=data.end_date,
+        driver_age=data.driver_age,
+        driving_experience=data.driving_experience,
+        total_price=total_price,
+        status="Confirmed"
     )
 
     db.add(reservation)

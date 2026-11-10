@@ -113,12 +113,21 @@ def reserve_car(
         )
 
     except ReservationConflictError as error:
+
         raise HTTPException(
+
             status_code=409,
+
             detail={
+
                 "message": str(error),
-                "alternatives": error.alternatives
+
+                "alternatives": error.alternatives,
+
+                "recommendation_source": error.recommendation_source
+
             }
+
         )
 
     except ValueError as error:
