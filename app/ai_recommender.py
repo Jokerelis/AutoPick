@@ -15,7 +15,6 @@ def recommend_alternatives(
     preferred_body_type=None,
     client=None
 ):
-    # Atsarginis variantas - pigiausias automobilis
     ranked = sorted(
         alternatives,
         key=lambda car: car["total_price"]
@@ -24,7 +23,6 @@ def recommend_alternatives(
     if not ranked:
         return [], "Fallback"
 
-    # Jei AI isjungtas arba nera API rakto
     if client is None:
         enabled = os.getenv(
             "AUTOPICK_AI_ENABLED", "false"
@@ -62,11 +60,8 @@ def recommend_alternatives(
             ),
             max_output_tokens=30
         )
-
-        # AI turi grazinti tik automobilio ID
         selected_id = int(response.output_text.strip())
 
-        # Tikriname ar AI pasirinko tikrai egzistuojancia alternatyva
         selected = next(
             (
                 car for car in ranked
@@ -78,7 +73,6 @@ def recommend_alternatives(
         if selected is None:
             return ranked, "Fallback"
 
-        # AI pasirinktas automobilis bus pirmas
         result = [selected] + [
             car for car in ranked
             if car["car_id"] != selected_id
