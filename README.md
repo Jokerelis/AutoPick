@@ -52,7 +52,7 @@ py -m venv .venv
 cd frontend
 npm install
 cd ..
-Copy-Item .env.example .env
+Copy-Item env.example .env
 .\.venv\Scripts\python.exe -m app.seed
 ```
 
