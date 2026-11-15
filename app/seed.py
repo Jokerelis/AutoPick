@@ -90,6 +90,15 @@ def seed_database():
                 body_type="Coupe",
                 is_4x4=False,
                 base_price=110.0
+            ),
+            Car(
+                company_id=company2.id,
+                brand="Audi",
+                model="A6",
+                category="Economic",
+                body_type="Sedan",
+                is_4x4=False,
+                base_price=38.0
             )
         ]
 
@@ -97,7 +106,7 @@ def seed_database():
         db.commit()
 
         print("Duomenu baze sekmingai sukurta!")
-        print("Sukurtos 2 imones ir 8 automobiliai.")
+        print("Sukurtos 2 imones ir 9 automobiliai.")
 
 
 if __name__ == "__main__":
